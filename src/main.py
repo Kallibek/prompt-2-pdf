@@ -4,7 +4,7 @@ Generate a PDF guide from a YAML specification of prompts.
 
 Usage:
     python main.py --input prompts.yaml --output result.pdf \
-        [--model gpt-4o-mini] [--toc-level 3] [--optimize] [--no-web-search] [--verbose]
+        [--model gpt-4.1-mini] [--toc-level 3] [--optimize] [--no-web-search] [--verbose]
 """
 
 import argparse
@@ -34,12 +34,18 @@ def parse_args() -> argparse.Namespace:
         help="Path to the output PDF file (default: result.pdf)",
     )
     parser.add_argument(
-        "--model", default="gpt-4o-mini",
-        help="OpenAI model name to use (default: gpt-4o-mini)",
+        "--model", default="gpt-4.1-mini",
+        help="OpenAI model name to use (default: gpt-4.1-mini)",
     )
     parser.add_argument(
         "--toc-level", type=int, default=3,
         help="Table of contents depth level (default: 3)",
+    )
+    parser.add_argument(
+    "-f", "--format",
+    choices=["pdf", "md"],
+    default="pdf",
+    help="Output format: 'pdf' (default) or 'md'",
     )
     parser.add_argument(
         "--optimize", action="store_true",
@@ -94,8 +100,10 @@ def generate_markdown_from_node(
         try:
             prompt = [
                 {"role": "system", "content": (
-                    "You are a concise assistant. Provide output in Markdown."
-                    " Use **bold** for headers and avoid extra separators."
+                    "You are a tutor teaching Solutions Architecture. "
+                    "Provide output in Markdown. "
+                    "Use **bold** for headers. "
+                    "No need for line separators in response markdown. "
                 )},
                 {"role": "user", "content": node},
             ]
@@ -127,7 +135,8 @@ def main() -> None:
     logging.info("Loading YAML from %s", args.input)
     data = load_yaml_file(args.input)
 
-    pdf = MarkdownPdf(toc_level=args.toc_level, optimize=args.optimize)
+    # Generate content for each top-level section
+    all_sections_md: List[str] = []
     for title, subtree in data.items():
         logging.debug("Processing section: %s", title)
         section_md = f"# {title}\n\n"
@@ -138,14 +147,33 @@ def main() -> None:
             use_web_search=args.use_web_search,
             depth=1
         )
-        pdf.add_section(Section(section_md, toc=True))
+        all_sections_md.append(section_md)
 
-    logging.info("Saving PDF to %s", args.output)
-    try:
-        pdf.save(args.output)
-    except Exception as e:
-        logging.error("Failed to save PDF: %s", e)
-        sys.exit(1)
+    if args.format == "md":
+        # Dump raw Markdown
+        out_path = args.output
+        if not out_path.lower().endswith(".md"):
+            out_path += ".md"
+        logging.info("Saving Markdown to %s", out_path)
+        try:
+            with open(out_path, "w", encoding="utf-8") as f:
+                f.write("\n\n---\n\n".join(all_sections_md))
+            logging.info("Markdown written successfully.")
+        except Exception as e:
+            logging.error("Failed to save Markdown: %s", e)
+            sys.exit(1)
+    else:
+        # Existing PDF flow
+        pdf = MarkdownPdf(toc_level=args.toc_level, optimize=args.optimize)
+        for section_md in all_sections_md:
+            pdf.add_section(Section(section_md, toc=True))
+
+        logging.info("Saving PDF to %s", args.output)
+        try:
+            pdf.save(args.output)
+        except Exception as e:
+            logging.error("Failed to save PDF: %s", e)
+            sys.exit(1)
 
 if __name__ == "__main__":
     main()

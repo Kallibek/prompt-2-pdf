@@ -2,3 +2,4 @@
 .venv/
 *.txt
 *.ps1
+results/
