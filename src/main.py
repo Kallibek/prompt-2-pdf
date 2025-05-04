@@ -9,6 +9,7 @@ Usage:
 
 import argparse
 import logging
+from pathlib import Path
 import os
 import sys
 from typing import Any, Dict, List, Union
@@ -100,7 +101,7 @@ def generate_markdown_from_node(
         try:
             prompt = [
                 {"role": "system", "content": (
-                    "You are a tutor teaching Solutions Architecture. "
+                    #"You are a tutor teaching Solutions Architecture. "
                     "Provide output in Markdown. "
                     "Use **bold** for headers. "
                     "No need for line separators in response markdown. "
@@ -134,6 +135,8 @@ def main() -> None:
 
     logging.info("Loading YAML from %s", args.input)
     data = load_yaml_file(args.input)
+    
+    css = Path("src/custom.css").read_text(encoding="utf-8")
 
     # Generate content for each top-level section
     all_sections_md: List[str] = []
@@ -166,7 +169,7 @@ def main() -> None:
         # Existing PDF flow
         pdf = MarkdownPdf(toc_level=args.toc_level, optimize=args.optimize)
         for section_md in all_sections_md:
-            pdf.add_section(Section(section_md, toc=True))
+            pdf.add_section(Section(section_md, toc=True), user_css=css)
 
         logging.info("Saving PDF to %s", args.output)
         try:
