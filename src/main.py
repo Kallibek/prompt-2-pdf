@@ -43,10 +43,10 @@ def parse_args() -> argparse.Namespace:
         help="Table of contents depth level (default: 3)",
     )
     parser.add_argument(
-    "-f", "--format",
-    choices=["pdf", "md"],
-    default="pdf",
-    help="Output format: 'pdf' (default) or 'md'",
+        "-f", "--format",
+        choices=["pdf", "md"],
+        default="pdf",
+        help="Output format: 'pdf' (default) or 'md'",
     )
     parser.add_argument(
         "--optimize", action="store_true",
@@ -101,10 +101,10 @@ def generate_markdown_from_node(
         try:
             prompt = [
                 {"role": "system", "content": (
-                    #"You are a tutor teaching Solutions Architecture. "
+                    "You are a tutor preparing me to the SnowPro® Advanced: Data Engineer (DEA-C02) certification. "
                     "Provide output in Markdown. "
                     "Use **bold** for headers. "
-                    "No need for line separators in response markdown. "
+                    "Don't add line separators in response. "
                 )},
                 {"role": "user", "content": node},
             ]
@@ -114,7 +114,7 @@ def generate_markdown_from_node(
                 tools=tools,
                 input=prompt,
             )
-            text = response.output_text.strip()
+            text = f"Prompt: {node}\n\n" + response.output_text.strip()
             lines.append(text + "\n\n---\n\n")
         except Exception as e:
             logging.error("AI request failed for node '%s': %s", node, e)
@@ -135,13 +135,16 @@ def main() -> None:
 
     logging.info("Loading YAML from %s", args.input)
     data = load_yaml_file(args.input)
-    
+
+    total_sections = len(data)
+    logging.info("Found %d top-level sections", total_sections)  # ← summary
+
     css = Path("src/custom.css").read_text(encoding="utf-8")
 
     # Generate content for each top-level section
     all_sections_md: List[str] = []
-    for title, subtree in data.items():
-        logging.debug("Processing section: %s", title)
+    for idx, (title, subtree) in enumerate(data.items(), start=1):
+        logging.info("=== Starting section %d/%d: %s ===", idx, total_sections, title)
         section_md = f"# {title}\n\n"
         section_md += generate_markdown_from_node(
             subtree,
@@ -151,6 +154,7 @@ def main() -> None:
             depth=1
         )
         all_sections_md.append(section_md)
+        logging.info("=== Completed section %d/%d: %s ===", idx, total_sections, title)
 
     if args.format == "md":
         # Dump raw Markdown
@@ -174,6 +178,7 @@ def main() -> None:
         logging.info("Saving PDF to %s", args.output)
         try:
             pdf.save(args.output)
+            logging.info("PDF successfully saved.")
         except Exception as e:
             logging.error("Failed to save PDF: %s", e)
             sys.exit(1)
