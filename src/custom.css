@@ -3,3 +3,13 @@ table, th, td {
     border-collapse: collapse;
   }
   
+pre, code {
+  white-space: pre-wrap;      /* Allow soft wrapping of lines */
+  word-wrap: break-word;      /* Break words if necessary to fit */
+}
+
+pre {
+  font-family: Menlo, Consolas, "Courier New", monospace;
+  font-size: 0.9em;
+  line-height: 1.4;
+}

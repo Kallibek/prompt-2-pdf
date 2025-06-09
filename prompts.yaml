@@ -1,6 +1,0 @@
-Domain 1:
-  "Network Connectivity Strategies":
-    - "Explain the differences between AWS Direct Connect, AWS VPN, and Transit Gateway in large-scale, multi-region architectures."
-Domain 2:
-  "Compute & Serverless Architectures":
-    - "Compare EC2 Auto Scaling with Lambda provisioning in unpredictable traffic patterns."

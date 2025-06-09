@@ -170,12 +170,13 @@ def main() -> None:
             logging.error("Failed to save Markdown: %s", e)
             sys.exit(1)
     else:
+        logging.info("Saving PDF to %s", args.output)
         # Existing PDF flow
         pdf = MarkdownPdf(toc_level=args.toc_level, optimize=args.optimize)
         for section_md in all_sections_md:
             pdf.add_section(Section(section_md, toc=True), user_css=css)
 
-        logging.info("Saving PDF to %s", args.output)
+        
         try:
             pdf.save(args.output)
             logging.info("PDF successfully saved.")
